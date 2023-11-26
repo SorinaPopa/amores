@@ -4,19 +4,20 @@ Topic chosen: Game of Life
 
 Title: Party in a Petri Dish
 
-There are 2 types of bacteria, sexual and asexual, each represented by a colour, and their food is random dots on the screen.
-Each bacteria has a counter to remind how many times it has eaten and it's time before dying that will apear if you press/hover on it.
-The bacteria is focused on eating. After the bacteria feeds the specific number of times (10), it will focus on reproducing.
-For sexual bacterium, from 2 adult bacterium there is 1 new child bacteria.
-For asexual bacterium, one bacteria splits in 2.
-The initial ones and these new created bacterium take the entire cycle again, all of them back to being hungry.
+There are 2 types of bacteria, sexual (S1, S2, S3, ...) and asexual (A1, A2, A3, ...), and they can consume food (f1, f2, f3, ...) from the Petri Dish (represented by a matrix). Each bacteria has a counter to remind how many times it has eaten and it has a time before dying.
 
+- The bacteria is focused on eating. After the bacteria feeds the specific number of times (10), it will focus on reproducing.
+- For sexual bacterium, from 2 adult bacterium there is 1 new child bacteria.
+- For asexual bacterium, one bacteria splits in 2.
+- The initial ones and these new created bacterium take the entire cycle again, all of them back to being hungry.
+
+Optionally:
 
 As a user, you can observe the simulation based on the specific number of parameters you are asked to give:
-B_num - the number of bacterium that the Petri Dish has in the beginning
-F_num - the number of food units the Petri Dish has in the beginning
-T_full - how much time before one bacteria starts starving
-T_starve - how much time before one bacteria is about to die
+- B_num - the number of bacterium that the Petri Dish has in the beginning
+- F_num - the number of food units the Petri Dish has in the beginning
+- T_full - how much time before one bacteria starts starving
+- T_starve - how much time before one bacteria is about to die
 
 You can chose a bacteria as a favourite and see how much time it survives and how many children it has created.
 There is a score, each time there is a new bacteria, the score increases.
@@ -50,9 +51,7 @@ Manages the game world and all its components, including bacterium and food unit
 Responsible for death and creation of bacterium and food units.
 It remembers how many bacterium exist.
 
-GameRenderer:
-Handles the graphical rendering of the game world.
-Renders bacterium, food units, and their interactions.
+Optionally:
 
 UserInterface:
 Represents the game's user interface.
