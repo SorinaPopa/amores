@@ -5,6 +5,10 @@ import java.util.concurrent.TimeUnit;
 public class Main {
     public static void main(String[] args) {
 
+        //set how big the petri dish is
+        PetriDish petriDish = new PetriDish(new int[]{10, 10});
+        petriDish.spawnFoodUnit(5);
+        
         ThreadPoolExecutor executor = new ThreadPoolExecutor(
                 5,
                 10,
@@ -12,12 +16,10 @@ public class Main {
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>()
         );
-
+      
         for (int i = 0; i < 10; i++) {
             executor.submit(new Bacteria("sexual", 3, 4));
         }
-
         executor.shutdown();
     }
-
 }
