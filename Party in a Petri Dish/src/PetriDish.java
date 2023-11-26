@@ -4,46 +4,53 @@ import java.util.Random;
 
 
 public class PetriDish {
-    private int[] dimension;
-    private int[][] matrix;
+    private final int[] dimension;
+    private Object[][] matrix;
     private List<Bacteria> bacteriaList = new ArrayList<>();
     private List<FoodUnit> foodUnitList = new ArrayList<>();
 
     public PetriDish(int[] dimension) {
         this.dimension = dimension;
-        this.matrix = new int[dimension[0]][dimension[1]];
+        this.matrix = new Object[dimension[0]][dimension[1]];
+        initializeMap();
     }
 
-    public void update() {
-        // Update the state of the Petri Dish over time
-        // This can include spawning new food units, updating bacteria positions, etc.
-
-        // For simplicity, let's spawn a new food unit randomly
-        spawnFoodUnit();
+    private void initializeMap() {
+        for (int i = 0; i < dimension[0]; i++) {
+            for (int j = 0; j < dimension[1]; j++) {
+                matrix[i][j] = null;
+            }
+        }
     }
 
-    private void spawnFoodUnit() {
+    public void spawnFoodUnit(int numberOfFoodUnits) {
         Random random = new Random();
-        int x = random.nextInt(dimension[0]);
-        int y = random.nextInt(dimension[1]);
+        for (int i = 0; i < numberOfFoodUnits; i++) {
+            int x = random.nextInt(dimension[0]);
+            int y = random.nextInt(dimension[1]);
 
-        FoodUnit newFoodUnit = new FoodUnit(x, y,5);
-        foodUnitList.add(newFoodUnit);
+            FoodUnit newFoodUnit = new FoodUnit(x, y, 5);
+            matrix[x][y] = newFoodUnit;
+            foodUnitList.add(newFoodUnit);
 
-        System.out.println("New food unit spawned at (" + x + ", " + y + ")");
+            System.out.println("New food unit spawned at (" + x + ", " + y + ")");
+        }
     }
 
     public List<FoodUnit> getFoodUnits() {
         return foodUnitList;
     }
 
-    public void Populate(Object obj) {
-        if (obj instanceof Bacteria) {
-            bacteriaList.add((Bacteria) obj);
+    public void printMatrix() {
+        for (int i = 0; i < dimension[0]; i++) {
+            for (int j = 0; j < dimension[1]; j++) {
+                if (matrix[i][j] == null) {
+                    System.out.print("null ");
+                } else {
+                    System.out.print(matrix[i][j].toString() + " ");
+                }
+            }
+            System.out.println();
         }
-        /*else if (obj instanceof FoodUnit) {
-            foodUnits.add((FoodUnit) obj);
-        }*/
-
     }
 }
