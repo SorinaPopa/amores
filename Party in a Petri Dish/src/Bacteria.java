@@ -4,31 +4,35 @@ import java.util.TimerTask;
 
 public class Bacteria implements Runnable {
     private String sexuality;
-    private int x, y;//positions
-    private int moveX;
-    private int moveY;
+    private int x, y, moveX, moveY;//positions
     private int T_full, T_starve;
     private int eat_counter;
     private Timer timer;
+    private PetriDish map;
+    private Boolean isAlive;
 
-    public Bacteria(String sexuality, int x, int y) {
+    public Bacteria(String sexuality, int x, int y, PetriDish map) {
         this.sexuality = sexuality;
         this.x = x;
         this.y = y;
         this.moveX = 0;
         this.moveY = 0;
-        this.eat_counter = 0;
         T_full = 5;
         T_starve = 5;
+        this.eat_counter = 0;
         this.timer = new Timer();
-
+        this.map = map;
+        isAlive = true;
     }
 
     public void run() {
-        this.StartHungerTimer();
+        this.startHungerTimer();
+        while (isAlive) {
+            seekAndConsume();
+        }
     }
 
-    public void StartHungerTimer() {
+    public void startHungerTimer() {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -40,7 +44,7 @@ public class Bacteria implements Runnable {
                         T_starve--;
                         System.out.println(this.toString() + " T_starve " + T_starve);
                     } else {
-                        Die();
+                        die();
                         timer.cancel();
                     }
                 }
@@ -48,23 +52,21 @@ public class Bacteria implements Runnable {
         }, 0, 1000);
     }
 
-    private void Die() {
+    private void die() {
+        isAlive = false;
         System.out.println(this.toString() + " died");
     }
 
-    public void seekAndConsume(PetriDish map) {
-        List<FoodUnit> foodUnits = map.getFoodUnits();
+    public void seekAndConsume() {
+        List<FoodUnit> foodUnits = this.map.getFoodUnits();
         int[] currentPosition = new int[]{this.x, this.y};
 
-        // Verificăm dacă există unități de hrană
         if (!foodUnits.isEmpty()) {
             FoodUnit nearestFoodUnit = findNearestFoodUnit(currentPosition, foodUnits);
 
             if (nearestFoodUnit != null) {
                 int[] targetPosition = nearestFoodUnit.getPosition();
-
-                // Deplasăm bacteria către cea mai apropiată unitate de hrană
-                moveTowards(targetPosition, map);
+                moveTowards(targetPosition, this.map);
             }
         }
     }
@@ -99,17 +101,26 @@ public class Bacteria implements Runnable {
         int targetX = targetPosition[0];
         int targetY = targetPosition[1];
 
-        // Calculăm diferența pe axa X și pe axa Y
         int deltaX = targetX - currentX;
         int deltaY = targetY - currentY;
 
-        // Verificăm dacă suntem deja la destinație
         if (deltaX == 0 && deltaY == 0) {
-            System.out.println("Bacteria reached the target!");
+            System.out.println(this.toString() + " reached the target!");
+            for (FoodUnit foodUnit : this.map.getFoodUnits()) {
+                if (foodUnit.getX() == targetX && foodUnit.getY() == targetY) {
+                    if(this.T_full >= 0) {
+                        this.T_full += 2;
+                    }
+                    else {
+                        this.T_starve += 2;
+                    }
+                    this.map.eraseFoodUnit(foodUnit);
+                    break;
+                }
+            }
             return;
         }
 
-        // Alegem direcția în care să ne deplasăm
         moveX = (deltaX > 0) ? 1 : (deltaX < 0) ? -1 : 0;
         moveY = (deltaY > 0) ? 1 : (deltaY < 0) ? -1 : 0;
 
@@ -118,14 +129,9 @@ public class Bacteria implements Runnable {
         this.y += moveY;
 
         // Apelăm metoda updateMap din clasa Map pentru a actualiza matricea
-        map.updateMap(this);
+        this.map.updateMap(this);
 
         System.out.println("Bacteria moved towards the target. New position: (" + this.x + ", " + this.y + ")");
-    }
-
-
-    private void FindNearestFoodUnit(int[] currentPosition) {
-
     }
 
     public void Multiply() {
