@@ -53,4 +53,11 @@ public class PetriDish {
             System.out.println();
         }
     }
+
+
+    public void updateMap(Bacteria bacteria) {
+        matrix[bacteria.getPosition()[0] - bacteria.getMoveX()][bacteria.getPosition()[1] - bacteria.getMoveY()] = null;
+
+        matrix[bacteria.getPosition()[0]][bacteria.getPosition()[1]] = this;
+    }
 }

@@ -28,19 +28,18 @@ public class Bacteria implements Runnable {
         this.StartHungerTimer();
     }
 
-    public void StartHungerTimer(){
+    public void StartHungerTimer() {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 if (T_full > 0) {
                     T_full--;
-                    System.out.println("T_full " + T_full);
+                    System.out.println(this.toString() + " T_full " + T_full);
                 } else {
                     if (T_starve > 0) {
                         T_starve--;
-                        System.out.println("T_starve " + T_starve);
-                    }
-                    else {
+                        System.out.println(this.toString() + " T_starve " + T_starve);
+                    } else {
                         Die();
                         timer.cancel();
                     }
@@ -50,22 +49,22 @@ public class Bacteria implements Runnable {
     }
 
     private void Die() {
-        System.out.println("the bacteria died");
+        System.out.println(this.toString() + " died");
     }
 
     public void seekAndConsume(PetriDish map) {
         List<FoodUnit> foodUnits = map.getFoodUnits();
-        int[] currentPosition = map.getPosition(this);
+        int[] currentPosition = new int[]{this.x, this.y};
 
         // Verificăm dacă există unități de hrană
         if (!foodUnits.isEmpty()) {
             FoodUnit nearestFoodUnit = findNearestFoodUnit(currentPosition, foodUnits);
 
             if (nearestFoodUnit != null) {
-                int[] targetPosition = map.getPosition(nearestFoodUnit);
+                int[] targetPosition = nearestFoodUnit.getPosition();
 
                 // Deplasăm bacteria către cea mai apropiată unitate de hrană
-                moveTowards(targetPosition);
+                moveTowards(targetPosition, map);
             }
         }
     }
@@ -140,12 +139,17 @@ public class Bacteria implements Runnable {
     public Boolean IsAsexual() {
         return this.sexuality.equals("asexual");
     }
+
     public int getMoveX() {
         return moveX;
     }
 
     public int getMoveY() {
         return moveY;
+    }
+
+    public int[] getPosition() {
+        return new int[]{this.x, this.y};
     }
 }
 
