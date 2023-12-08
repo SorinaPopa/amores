@@ -1,5 +1,10 @@
 package org.example;
 
+import com.rabbitmq.client.AlreadyClosedException;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.MessageProperties;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -12,8 +17,11 @@ public class Bacteria implements Runnable {
     private Timer timer;
     private PetriDish map;
     private Boolean isAlive;
+    private final Channel channel;
+    private final String queueName;
 
-    public Bacteria(String sexuality, int x, int y, PetriDish map) {
+
+    public Bacteria(String sexuality, int x, int y, PetriDish map, Channel channel, String queueName) {
         this.sexuality = sexuality;
         this.x = x;
         this.y = y;
@@ -25,6 +33,8 @@ public class Bacteria implements Runnable {
         this.timer = new Timer();
         this.map = map;
         isAlive = true;
+        this.channel = channel;
+        this.queueName = queueName;
     }
 
     public void run() {
@@ -108,6 +118,7 @@ public class Bacteria implements Runnable {
 
         if (deltaX == 0 && deltaY == 0) {
             System.out.println(this.toString() + " reached the target!");
+            publishMessage("Hello, mr rabbit");
             for (FoodUnit foodUnit : this.map.getFoodUnits()) {
                 if (foodUnit.getX() == targetX && foodUnit.getY() == targetY) {
                     if(this.T_full >= 0) {
@@ -135,6 +146,21 @@ public class Bacteria implements Runnable {
 
         System.out.println("Bacteria moved towards the target. New position: (" + this.x + ", " + this.y + ")");
     }
+
+    public void publishMessage(String message) {
+        try {
+            // Publish the message to the queue
+            channel.basicPublish("", queueName, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+            System.out.println(" [x] Sent '" + message + "'");
+        } catch (AlreadyClosedException e) {
+            System.err.println("Channel is already closed. Possible causes: " + e.getMessage());
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.err.println("Error publishing message to RabbitMQ:");
+            e.printStackTrace();
+        }
+    }
+
 
     public void Multiply() {
         if (this.IsAsexual()) {
