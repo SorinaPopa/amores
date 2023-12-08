@@ -5,8 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4de86594-d107-4f3f-a524-4f28c7db640d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/RabbitMQConsumer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/RabbitMQProducer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/amqp-client-5.16.0.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/RabbitMQConsumer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/RabbitMQConsumer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testingRabbitMq.iml" beforeDir="false" afterPath="$PROJECT_DIR$/testingRabbitMq.iml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,9 +25,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 8
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
   <component name="ProjectId" id="2Z7hnEuCgEGYhkDHSW0TkGVDXmZ" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -35,9 +37,15 @@
   "keyToString": {
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main"
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/sori/Pseudo-D/cebp/amores/testingRabbitMq"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\sori\Pseudo-D\cebp\amores\testingRabbitMq\lib" />
+    </key>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
