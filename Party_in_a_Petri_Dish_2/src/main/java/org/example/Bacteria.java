@@ -10,6 +10,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Random;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Bacteria implements Runnable {
     private final ThreadPoolExecutor executor;
@@ -21,6 +23,7 @@ public class Bacteria implements Runnable {
     private Boolean isAlive;
     private int x, y, moveX, moveY, T_full, T_starve, eat_counter;
     private final String sexuality;
+
 
     public Bacteria(ThreadPoolExecutor executor, Channel channel, String queue, PetriDish map, int x, int y, String sexuality) {
         this.executor = executor;
@@ -83,11 +86,19 @@ public class Bacteria implements Runnable {
         if (!foodUnits.isEmpty()) {
             FoodUnit nearestFoodUnit = findNearestFoodUnit(currentPosition, foodUnits);
             if (nearestFoodUnit != null) {
-                int[] targetPosition = nearestFoodUnit.getPosition();
-                moveTowards(targetPosition, this.map);
+                ReentrantLock foodUnitLock = nearestFoodUnit.getLock();
+                if (foodUnitLock.tryLock()) {
+                    try {
+                        int[] targetPosition = nearestFoodUnit.getPosition();
+                        moveTowards(targetPosition, this.map);
+                    } finally {
+                        foodUnitLock.unlock();
+                    }
+                }
             }
         }
     }
+
 
     private FoodUnit findNearestFoodUnit(int[] currentPosition, List<FoodUnit> foodUnits) {
         FoodUnit nearestFoodUnit = null;
@@ -125,10 +136,9 @@ public class Bacteria implements Runnable {
             publishMessage(this.toString() + " reached the target food unit at position (" + targetPosition[0] + ", " + targetPosition[1] + ")");
             for (FoodUnit foodUnit : this.map.getFoodUnits()) {
                 if (foodUnit.getX() == targetX && foodUnit.getY() == targetY) {
-                    if(this.T_full >= 0) {
+                    if (this.T_full >= 0) {
                         this.T_full += 2;
-                    }
-                    else {
+                    } else {
                         this.T_starve += 2;
                     }
                     this.map.eraseFoodUnit(foodUnit);
@@ -136,10 +146,9 @@ public class Bacteria implements Runnable {
                 }
             }
             this.eat_counter++;
-            if(eat_counter == 5){
+            if (eat_counter == 5) {
                 multiply();
-            }
-            else
+            } else
                 return;
         }
 
@@ -154,12 +163,25 @@ public class Bacteria implements Runnable {
 
     public void multiply() {
         publishMessage(this.sexuality + " " + this.toString() + " ready to multiply");
+
         if (this.isAsexual()) {
-            this.executor.submit(new Bacteria(this.executor, this.channel, this.queue, this.map, this.x, this.y, "asexual"));
+            int newX = this.x + getRandomOffset();
+            int newY = this.y + getRandomOffset();
+
+            newX = Math.max(0, Math.min(newX, map.getDimension()[0] - 1));
+            newY = Math.max(0, Math.min(newY, map.getDimension()[1] - 1));
+
+            this.executor.submit(new Bacteria(this.executor, this.channel, this.queue, this.map, newX, newY, "asexual"));
         } else {
-            //find mate
+            // Sexual reproduction
+            // Implement logic to find a mate and spawn a new bacterium
         }
     }
+
+    private int getRandomOffset() {
+        return random.nextInt(3) - 1;
+    }
+
 
     public Boolean isAsexual() {
         return this.sexuality.equals("asexual");

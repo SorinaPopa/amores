@@ -52,7 +52,7 @@ public class PetriDish {
         }
     }
 
-    public void eraseBacteria(Bacteria bacteria){
+    public void eraseBacteria(Bacteria bacteria) {
         if (this.bacteriaList.contains(bacteria)) {
             foodUnitList.remove(bacteria);
         }
@@ -96,5 +96,9 @@ public class PetriDish {
         } catch (AlreadyClosedException | IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public int[] getDimension(){
+        return dimension;
     }
 }

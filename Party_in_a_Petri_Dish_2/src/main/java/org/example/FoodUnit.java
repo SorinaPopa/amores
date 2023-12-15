@@ -1,7 +1,11 @@
 package org.example;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 public class FoodUnit {
     private final int x, y, tFull;
+
+    private final ReentrantLock lock = new ReentrantLock();
 
     public FoodUnit(int x, int y, int tFull) {
         this.x = x;
@@ -19,5 +23,9 @@ public class FoodUnit {
 
     public int getY() {
         return y;
+    }
+
+    public ReentrantLock getLock() {
+        return lock;
     }
 }
