@@ -8,21 +8,27 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Random;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class Bacteria implements Runnable {
-    private String sexuality;
-    private int x, y, moveX, moveY;//positions
-    private int T_full, T_starve;
-    private int eat_counter;
+    private final ThreadPoolExecutor executor;
+    private final Channel channel;
+    private final String queue;
     private Timer timer;
+    private static final Random random = new Random();
     private PetriDish map;
     private Boolean isAlive;
-    private final Channel channel;
-    private final String queueName;
+    private int x, y, moveX, moveY, T_full, T_starve, eat_counter;
+    private final String sexuality;
 
-
-    public Bacteria(String sexuality, int x, int y, PetriDish map, Channel channel, String queueName) {
-        this.sexuality = sexuality;
+    public Bacteria(ThreadPoolExecutor executor, Channel channel, String queue, PetriDish map, int x, int y, String sexuality) {
+        this.executor = executor;
+        this.channel = channel;
+        this.queue = queue;
+        this.timer = new Timer();
+        this.map = map;
+        isAlive = true;
         this.x = x;
         this.y = y;
         this.moveX = 0;
@@ -30,11 +36,10 @@ public class Bacteria implements Runnable {
         T_full = 5;
         T_starve = 5;
         this.eat_counter = 0;
-        this.timer = new Timer();
-        this.map = map;
-        isAlive = true;
-        this.channel = channel;
-        this.queueName = queueName;
+        this.sexuality = sexuality;
+
+        this.map.addBacteria(this);
+        publishMessage("New " + this.sexuality + " bacteria " + this.toString() + " spawned at (" + x + ", " + y + ")");
     }
 
     public void run() {
@@ -66,7 +71,9 @@ public class Bacteria implements Runnable {
 
     private void die() {
         isAlive = false;
-        System.out.println(this.toString() + " died");
+        this.map.eraseBacteria(this);
+        publishMessage(this.toString() + " died");
+        map.spawnFoodUnit(random.nextInt(5));
     }
 
     public void seekAndConsume() {
@@ -75,7 +82,6 @@ public class Bacteria implements Runnable {
 
         if (!foodUnits.isEmpty()) {
             FoodUnit nearestFoodUnit = findNearestFoodUnit(currentPosition, foodUnits);
-
             if (nearestFoodUnit != null) {
                 int[] targetPosition = nearestFoodUnit.getPosition();
                 moveTowards(targetPosition, this.map);
@@ -96,7 +102,6 @@ public class Bacteria implements Runnable {
                 nearestFoodUnit = foodUnit;
             }
         }
-
         return nearestFoodUnit;
     }
 
@@ -117,8 +122,7 @@ public class Bacteria implements Runnable {
         int deltaY = targetY - currentY;
 
         if (deltaX == 0 && deltaY == 0) {
-            System.out.println(this.toString() + " reached the target!");
-            publishMessage("Hello, mr rabbit");
+            publishMessage(this.toString() + " reached the target food unit at position (" + targetPosition[0] + ", " + targetPosition[1] + ")");
             for (FoodUnit foodUnit : this.map.getFoodUnits()) {
                 if (foodUnit.getX() == targetX && foodUnit.getY() == targetY) {
                     if(this.T_full >= 0) {
@@ -131,46 +135,33 @@ public class Bacteria implements Runnable {
                     break;
                 }
             }
-            return;
+            this.eat_counter++;
+            if(eat_counter == 5){
+                multiply();
+            }
+            else
+                return;
         }
 
         moveX = (deltaX > 0) ? 1 : (deltaX < 0) ? -1 : 0;
         moveY = (deltaY > 0) ? 1 : (deltaY < 0) ? -1 : 0;
 
-        // Actualizăm poziția bacteriei
         this.x += moveX;
         this.y += moveY;
 
-        // Apelăm metoda updateMap din clasa Map pentru a actualiza matricea
         this.map.updateMap(this);
-
-        System.out.println("Bacteria moved towards the target. New position: (" + this.x + ", " + this.y + ")");
     }
 
-    public void publishMessage(String message) {
-        try {
-            // Publish the message to the queue
-            channel.basicPublish("", queueName, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
-            System.out.println(" [x] Sent '" + message + "'");
-        } catch (AlreadyClosedException e) {
-            System.err.println("Channel is already closed. Possible causes: " + e.getMessage());
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.err.println("Error publishing message to RabbitMQ:");
-            e.printStackTrace();
-        }
-    }
-
-
-    public void Multiply() {
-        if (this.IsAsexual()) {
-            //duplicates
+    public void multiply() {
+        publishMessage(this.sexuality + " " + this.toString() + " ready to multiply");
+        if (this.isAsexual()) {
+            this.executor.submit(new Bacteria(this.executor, this.channel, this.queue, this.map, this.x, this.y, "asexual"));
         } else {
             //find mate
         }
     }
 
-    public Boolean IsAsexual() {
+    public Boolean isAsexual() {
         return this.sexuality.equals("asexual");
     }
 
@@ -184,6 +175,14 @@ public class Bacteria implements Runnable {
 
     public int[] getPosition() {
         return new int[]{this.x, this.y};
+    }
+
+    public void publishMessage(String message) {
+        try {
+            channel.basicPublish("", queue, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+        } catch (AlreadyClosedException | IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 

@@ -15,13 +15,12 @@ public class Main {
         factory.setHost("localhost");
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
+        String queue = "Queue";
 
-        // Declare a queue
-        channel.queueDeclare("Queue", false, false, false, null);
+        channel.queueDeclare(queue, false, false, false, null);
 
-        // set how big the petri dish is
-        PetriDish petriDish = new PetriDish(new int[]{10, 10});
-        petriDish.spawnFoodUnit(5);
+        PetriDish petriDish = new PetriDish(new int[]{10, 10}, channel, queue);
+        petriDish.spawnFoodUnit(10);
 
         ThreadPoolExecutor executor = new ThreadPoolExecutor(
                 5,
@@ -31,15 +30,15 @@ public class Main {
                 new LinkedBlockingQueue<>()
         );
 
-        // Submit the Bacteria task to the executor
-        executor.submit(new Bacteria("sexual", 3, 4, petriDish, channel, "Queue"));
+        executor.submit(new Bacteria(executor, channel, queue, petriDish, 3, 4, "asexual"));
 
-        // Shutdown the executor and wait for its tasks to complete
         executor.shutdown();
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
-        // Close the channel and connection after the executor has completed
-        channel.close();
-        connection.close();
+        if(petriDish.getBacteria().isEmpty())
+        {
+            channel.close();
+            connection.close();
+        }
     }
 }
