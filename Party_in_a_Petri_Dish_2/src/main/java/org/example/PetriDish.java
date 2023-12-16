@@ -98,7 +98,7 @@ public class PetriDish {
         }
     }
 
-    public int[] getDimension(){
+    public int[] getDimension() {
         return dimension;
     }
 

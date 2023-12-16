@@ -4,43 +4,48 @@ Topic chosen: Game of Life
 
 Title: Party in a Petri Dish
 
-There are 2 types of bacteria, sexual (S1, S2, S3, ...) and asexual (A1, A2, A3, ...), and they can consume food (f1, f2, f3, ...) from the Petri Dish (represented by a matrix). Each bacteria has a counter to remind how many times it has eaten and it has a time before dying.
+There are 2 types of bacteria, sexual and asexual , and they can consume food from the Petri Dish (represented by a matrix). Each bacterium has a counter (in seconds) to tell how much time there is left until starvation (T_full) and then it has a counter to tell how much time there is left until death(T_starve).
 
-- The bacteria is focused on eating. After the bacteria feeds the specific number of times (10), it will focus on reproducing.
-- For sexual bacterium, from 2 adult bacterium there is 1 new child bacteria.
-- For asexual bacterium, one bacteria splits in 2.
-- The initial ones and these new created bacterium take the entire cycle again, all of them back to being hungry.
-
-Optionally:
-
-As a user, you can observe the simulation based on the specific number of parameters you are asked to give:
-- B_num - the number of bacterium that the Petri Dish has in the beginning
-- F_num - the number of food units the Petri Dish has in the beginning
-- T_full - how much time before one bacteria starts starving
-- T_starve - how much time before one bacteria is about to die
-
-You can chose a bacteria as a favourite and see how much time it survives and how many children it has created.
-There is a score, each time there is a new bacteria, the score increases.
+- Bacteria are focused on eating. After a bacterium feeds the specific number of times (5), it will focus on reproducing. 
+- When a sexual bacterium is ready to multiply and it meets another sexual bacterium, it spawns a sexual bacterium.
+- When an asexual bacterium is ready to multiply, it spawns another asexual bacterium (one bacterium splits in 2).
+- The initial ones and these new created bacteria take the entire cycle again, all of them back to being hungry.
 
 
 # Concurrency Problems:
 
 Race Conditions:
-Bacterium are focused on finding the closest food unit. In case the distance from 2 bacterium and a single food unit is the same, there might be a problem if both of them will want to eat it.
+Bacteria are focused on finding the closest food unit. In case the distance from 2 bacteria and a single food unit is the same, there might be a problem if both of them will want to eat it.
 
 Deadlocks:
 As previously mentioned, if the two bacteria get closer to the food unit, it might cause a deadlock if both wait for the other to eat. Or if they walk towards each other, they might not know how to pass each other, being stuck.
 
 Resource Contention:
-The moment where there is no food left on the Dish, the bacterium might not know what else to do.
+The moment where there is no food left on the Dish, the bacteria might not know what else to do.
+
+Exclusive Cell Access:
+To prevent conflicts, only one elements can occupy a cell at a time. And new food units or bacteria children cannot spawn on an occupied cell. 
 
 
-# Modules and Classes:
+# Classes:
 
 Bacteria:
-This class represents individual bacteria in the simulation. Each bacteria will be a distinct thread.
+This class represents individual bacterium in the simulation. Each bacterium will be a distinct thread.
 Properties include type (sexual or asexual), hunger level, starvation level and position.
 Methods include: eating, reproducing, and dying.
+
+run
+startHungerTimer
+die
+seekAndConsume
+findNearestFoodUnit
+findNearestSexualBacteria
+calculateDistance
+moveTowards
+multiply
+moveTowardsMate
+calculateMeetPoint
+
 
 FoodUnit:
 Represents the food units available in the Petri Dish.
@@ -50,6 +55,11 @@ PetriDish:
 Manages the game world and all its components, including bacterium and food units.
 Responsible for death and creation of bacterium and food units.
 It remembers how many bacterium exist.
+
+Main:
+
+
+
 
 Optionally:
 

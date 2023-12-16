@@ -204,10 +204,10 @@ public class Bacteria implements Runnable {
                     ReentrantLock bacteriaLock = nearestBacteria.getLock();
                     if (bacteriaLock.tryLock()) {
                         try {
-                            int[] meetpoint = calculateMeetpoint(this, nearestBacteria);
+                            int[] meetpoint = calculateMeetPoint(this, nearestBacteria);
                             moveTowardsMate(meetpoint, this.map);
                             if (meetpoint[0] == this.x && meetpoint[1] == this.y) {
-                                // If the current position is the meet point, reproduce
+
                                 int newX = this.x + getRandomOffset();
                                 int newY = this.y + getRandomOffset();
 
@@ -259,7 +259,7 @@ public class Bacteria implements Runnable {
         this.map.updateMap(this);
     }
 
-    private int[] calculateMeetpoint(Bacteria b1, Bacteria b2) {
+    private int[] calculateMeetPoint(Bacteria b1, Bacteria b2) {
         int midX = (b1.x + b2.x) / 2;
         int midY = (b1.y + b2.y) / 2;
 
