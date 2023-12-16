@@ -20,7 +20,7 @@ public class Main {
         channel.queueDeclare(queue, false, false, false, null);
 
         PetriDish petriDish = new PetriDish(new int[]{10, 10}, channel, queue);
-        petriDish.spawnFoodUnit(10);
+        petriDish.spawnFoodUnit(20);
 
         ThreadPoolExecutor executor = new ThreadPoolExecutor(
                 5,
@@ -30,8 +30,8 @@ public class Main {
                 new LinkedBlockingQueue<>()
         );
 
-        executor.submit(new Bacteria(executor, channel, queue, petriDish, 3, 4, "asexual"));
-        executor.submit(new Bacteria(executor, channel, queue, petriDish, 7, 8, "asexual"));
+        //executor.submit(new Bacteria(executor, channel, queue, petriDish, 3, 4, "asexual"));
+        executor.submit(new Bacteria(executor, channel, queue, petriDish, 7, 8, "sexual"));
         executor.submit(new Bacteria(executor, channel, queue, petriDish, 2, 6, "sexual"));
 
 

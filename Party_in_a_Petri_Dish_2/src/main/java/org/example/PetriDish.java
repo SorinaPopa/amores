@@ -101,4 +101,8 @@ public class PetriDish {
     public int[] getDimension(){
         return dimension;
     }
+
+    public boolean getFreePoint(int x, int y) {
+        return matrix[x][y] == null;
+    }
 }

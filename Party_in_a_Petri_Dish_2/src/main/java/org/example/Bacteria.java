@@ -23,7 +23,8 @@ public class Bacteria implements Runnable {
     private Boolean isAlive;
     private int x, y, moveX, moveY, T_full, T_starve, eat_counter;
     private final String sexuality;
-
+    private Boolean readyToMultiply = false;
+    private ReentrantLock lock = new ReentrantLock();
 
     public Bacteria(ThreadPoolExecutor executor, Channel channel, String queue, PetriDish map, int x, int y, String sexuality) {
         this.executor = executor;
@@ -116,6 +117,24 @@ public class Bacteria implements Runnable {
         return nearestFoodUnit;
     }
 
+    private Bacteria findNearestSexualBacteria(int[] currentPosition, List<Bacteria> bacteriaList) {
+        Bacteria nearestBacteria = null;
+        double minDistance = Double.MAX_VALUE;
+
+        for (Bacteria bacteria : bacteriaList) {
+            if(bacteria.readyToMultiply) {
+                int[] bacteriaPosition = bacteria.getPosition();
+                double distance = calculateDistance(currentPosition, bacteriaPosition);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestBacteria = bacteria;
+                }
+            }
+        }
+        return nearestBacteria;
+    }
+
     private double calculateDistance(int[] position1, int[] position2) {
         int deltaX = position2[0] - position1[0];
         int deltaY = position2[1] - position1[1];
@@ -147,6 +166,7 @@ public class Bacteria implements Runnable {
             }
             this.eat_counter++;
             if (eat_counter == 5) {
+                this.readyToMultiply = true;
                 multiply();
             } else
                 return;
@@ -173,10 +193,98 @@ public class Bacteria implements Runnable {
 
             this.executor.submit(new Bacteria(this.executor, this.channel, this.queue, this.map, newX, newY, "asexual"));
         } else {
-            // Sexual reproduction
-            // Implement logic to find a mate and spawn a new bacterium
+            List<Bacteria> bacteriaList = this.map.getBacteria();
+            int[] currentPosition = new int[]{this.x, this.y};
+
+            if (!bacteriaList.isEmpty()) {
+                Bacteria nearestBacteria = findNearestSexualBacteria(currentPosition, bacteriaList);
+                if (nearestBacteria != null) {
+                    ReentrantLock bacteriaLock = nearestBacteria.getLock();
+                    if (bacteriaLock.tryLock()) {
+                        try {
+                            moveTowardsMate(calculateMeetpoint(this,nearestBacteria), this.map);
+                        } finally {
+                            bacteriaLock.unlock();
+                        }
+                    }
+                }
+            }
         }
     }
+
+    private void moveTowardsMate(int[] targetPosition, PetriDish map) {
+        int currentX = this.x;
+        int currentY = this.y;
+
+        int targetX = targetPosition[0];
+        int targetY = targetPosition[1];
+
+        int deltaX = targetX - currentX;
+        int deltaY = targetY - currentY;
+
+        if (deltaX == 0 && deltaY == 0) {
+            publishMessage(this.toString() + " reached the mate at position (" + targetPosition[0] + ", " + targetPosition[1] + ")");
+            int newX = this.x + getRandomOffset();
+            int newY = this.y + getRandomOffset();
+
+            newX = Math.max(0, Math.min(newX, map.getDimension()[0] - 1));
+            newY = Math.max(0, Math.min(newY, map.getDimension()[1] - 1));
+
+            this.executor.submit(new Bacteria(this.executor, this.channel, this.queue, this.map, newX, newY, "sexual"));
+        }
+
+        moveX = (deltaX > 0) ? 1 : (deltaX < 0) ? -1 : 0;
+        moveY = (deltaY > 0) ? 1 : (deltaY < 0) ? -1 : 0;
+
+        this.x += moveX;
+        this.y += moveY;
+
+        this.map.updateMap(this);
+    }
+
+    private int[] calculateMeetpoint(Bacteria b1, Bacteria b2) {
+        int midX = (b1.x + b2.x) / 2;
+        int midY = (b1.y + b2.y) / 2;
+
+        if (this.map.getFreePoint(midX, midY)) {
+            return new int[]{midX, midY};
+        } else {
+            if (midX < this.map.getDimension()[0] - 1) {
+                if (this.map.getFreePoint(midX + 1, midY))
+                    return new int[]{midX + 1, midY};
+            }
+            if (midY < this.map.getDimension()[1] - 1) {
+                if (this.map.getFreePoint(midX, midY + 1))
+                    return new int[]{midX, midY + 1};
+            }
+            if (midX < this.map.getDimension()[0] - 1 && midY < this.map.getDimension()[1] - 1) {
+                if (this.map.getFreePoint(midX + 1, midY + 1))
+                    return new int[]{midX + 1, midY + 1};
+            }
+            if (midX > 0) {
+                if (this.map.getFreePoint(midX - 1, midY))
+                    return new int[]{midX - 1, midY};
+            }
+            if (midY > 0) {
+                if (this.map.getFreePoint(midX, midY - 1))
+                    return new int[]{midX, midY - 1};
+            }
+            if (midX > 0 && midY > 0) {
+                if (this.map.getFreePoint(midX - 1, midY - 1))
+                    return new int[]{midX - 1, midY - 1};
+            }
+            if (midX > 0 && midY < this.map.getDimension()[1] - 1) {
+                if (this.map.getFreePoint(midX - 1, midY + 1))
+                    return new int[]{midX - 1, midY + 1};
+            }
+            if (midX < this.map.getDimension()[0] - 1 && midY > 0) {
+                if (this.map.getFreePoint(midX + 1, midY - 1))
+                    return new int[]{midX + 1, midY - 1};
+            }
+        }
+        return new int[]{0,0};
+    }
+
 
     private int getRandomOffset() {
         return random.nextInt(3) - 1;
@@ -197,6 +305,10 @@ public class Bacteria implements Runnable {
 
     public int[] getPosition() {
         return new int[]{this.x, this.y};
+    }
+
+    public ReentrantLock getLock() {
+        return lock;
     }
 
     public void publishMessage(String message) {
