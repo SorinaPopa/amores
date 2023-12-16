@@ -31,12 +31,8 @@ public class Main {
         );
 
         //executor.submit(new Bacteria(executor, channel, queue, petriDish, 3, 4, "asexual"));
-        executor.submit(new Bacteria(executor, channel, queue, petriDish, 7, 8, "sexual"));
-        executor.submit(new Bacteria(executor, channel, queue, petriDish, 2, 6, "sexual"));
-
-
-        executor.shutdown();
-        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        //executor.submit(new Bacteria(executor, channel, queue, petriDish, 7, 8, "sexual"));
+        executor.execute(new Bacteria(executor, channel, queue, petriDish, 2, 6, "asexual"));
 
         if (petriDish.getBacteria().isEmpty()) {
             channel.close();

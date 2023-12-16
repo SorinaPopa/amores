@@ -5,19 +5,20 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.MessageProperties;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Bacteria implements Runnable {
     private final ThreadPoolExecutor executor;
     private final Channel channel;
     private final String queue;
-    private Timer timer;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private static final Random random = new Random();
     private PetriDish map;
     private Boolean isAlive;
@@ -30,7 +31,6 @@ public class Bacteria implements Runnable {
         this.executor = executor;
         this.channel = channel;
         this.queue = queue;
-        this.timer = new Timer();
         this.map = map;
         isAlive = true;
         this.x = x;
@@ -48,29 +48,25 @@ public class Bacteria implements Runnable {
 
     public void run() {
         this.startHungerTimer();
-        while (isAlive) {
+        while (isAlive && !readyToMultiply) {
             seekAndConsume();
         }
     }
 
     public void startHungerTimer() {
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if (T_full > 0) {
-                    T_full--;
-                    System.out.println(this.toString() + " T_full " + T_full);
+        scheduler.scheduleAtFixedRate(() -> {
+            if (T_full > 0) {
+                T_full--;
+                System.out.println(this.toString() + " T_full " + T_full);
+            } else {
+                if (T_starve > 0) {
+                    T_starve--;
+                    System.out.println(this.toString() + " T_starve " + T_starve);
                 } else {
-                    if (T_starve > 0) {
-                        T_starve--;
-                        System.out.println(this.toString() + " T_starve " + T_starve);
-                    } else {
-                        die();
-                        timer.cancel();
-                    }
+                    die();
                 }
             }
-        }, 0, 1000);
+        }, 0, 1, TimeUnit.SECONDS);
     }
 
     private void die() {
@@ -78,6 +74,7 @@ public class Bacteria implements Runnable {
         this.map.eraseBacteria(this);
         publishMessage(this.toString() + " died");
         map.spawnFoodUnit(random.nextInt(5));
+        scheduler.shutdown();
     }
 
     public void seekAndConsume() {
@@ -100,18 +97,21 @@ public class Bacteria implements Runnable {
         }
     }
 
-
     private FoodUnit findNearestFoodUnit(int[] currentPosition, List<FoodUnit> foodUnits) {
         FoodUnit nearestFoodUnit = null;
         double minDistance = Double.MAX_VALUE;
 
-        for (FoodUnit foodUnit : foodUnits) {
-            int[] foodUnitPosition = foodUnit.getPosition();
-            double distance = calculateDistance(currentPosition, foodUnitPosition);
+        List<FoodUnit> foodUnitCopy = new ArrayList<>(foodUnits);
 
-            if (distance < minDistance) {
-                minDistance = distance;
-                nearestFoodUnit = foodUnit;
+        for (FoodUnit foodUnit : foodUnitCopy) {
+            if (foodUnit != null) {
+                int[] foodUnitPosition = foodUnit.getPosition();
+                double distance = calculateDistance(currentPosition, foodUnitPosition);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestFoodUnit = foodUnit;
+                }
             }
         }
         return nearestFoodUnit;
@@ -191,7 +191,9 @@ public class Bacteria implements Runnable {
             newX = Math.max(0, Math.min(newX, map.getDimension()[0] - 1));
             newY = Math.max(0, Math.min(newY, map.getDimension()[1] - 1));
 
-            this.executor.submit(new Bacteria(this.executor, this.channel, this.queue, this.map, newX, newY, "asexual"));
+            this.executor.execute(new Bacteria(this.executor, this.channel, this.queue, this.map, newX, newY, "asexual"));
+            this.readyToMultiply = false;
+            this.eat_counter = 0;
         } else {
             List<Bacteria> bacteriaList = this.map.getBacteria();
             int[] currentPosition = new int[]{this.x, this.y};
@@ -231,6 +233,7 @@ public class Bacteria implements Runnable {
             newY = Math.max(0, Math.min(newY, map.getDimension()[1] - 1));
 
             this.executor.submit(new Bacteria(this.executor, this.channel, this.queue, this.map, newX, newY, "sexual"));
+            this.readyToMultiply = false;
         }
 
         moveX = (deltaX > 0) ? 1 : (deltaX < 0) ? -1 : 0;
@@ -285,11 +288,9 @@ public class Bacteria implements Runnable {
         return new int[]{0,0};
     }
 
-
     private int getRandomOffset() {
         return random.nextInt(3) - 1;
     }
-
 
     public Boolean isAsexual() {
         return this.sexuality.equals("asexual");
