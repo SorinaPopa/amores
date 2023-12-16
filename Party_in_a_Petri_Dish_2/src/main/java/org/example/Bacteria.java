@@ -122,7 +122,7 @@ public class Bacteria implements Runnable {
         double minDistance = Double.MAX_VALUE;
 
         for (Bacteria bacteria : bacteriaList) {
-            if(bacteria.readyToMultiply) {
+            if (bacteria.readyToMultiply) {
                 int[] bacteriaPosition = bacteria.getPosition();
                 double distance = calculateDistance(currentPosition, bacteriaPosition);
 
@@ -204,7 +204,20 @@ public class Bacteria implements Runnable {
                     ReentrantLock bacteriaLock = nearestBacteria.getLock();
                     if (bacteriaLock.tryLock()) {
                         try {
-                            moveTowardsMate(calculateMeetpoint(this,nearestBacteria), this.map);
+                            int[] meetpoint = calculateMeetpoint(this, nearestBacteria);
+                            moveTowardsMate(meetpoint, this.map);
+                            if (meetpoint[0] == this.x && meetpoint[1] == this.y) {
+                                // If the current position is the meet point, reproduce
+                                int newX = this.x + getRandomOffset();
+                                int newY = this.y + getRandomOffset();
+
+                                newX = Math.max(0, Math.min(newX, map.getDimension()[0] - 1));
+                                newY = Math.max(0, Math.min(newY, map.getDimension()[1] - 1));
+
+                                this.executor.submit(new Bacteria(this.executor, this.channel, this.queue, this.map, newX, newY, "sexual"));
+                                this.readyToMultiply = false;
+                                this.eat_counter = 0;
+                            }
                         } finally {
                             bacteriaLock.unlock();
                         }
@@ -234,6 +247,7 @@ public class Bacteria implements Runnable {
 
             this.executor.submit(new Bacteria(this.executor, this.channel, this.queue, this.map, newX, newY, "sexual"));
             this.readyToMultiply = false;
+            this.eat_counter = 0;
         }
 
         moveX = (deltaX > 0) ? 1 : (deltaX < 0) ? -1 : 0;
@@ -285,7 +299,7 @@ public class Bacteria implements Runnable {
                     return new int[]{midX + 1, midY - 1};
             }
         }
-        return new int[]{0,0};
+        return new int[]{0, 0};
     }
 
     private int getRandomOffset() {

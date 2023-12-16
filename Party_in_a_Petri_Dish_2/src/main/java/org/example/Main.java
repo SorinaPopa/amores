@@ -21,6 +21,7 @@ public class Main {
 
         PetriDish petriDish = new PetriDish(new int[]{10, 10}, channel, queue);
         petriDish.spawnFoodUnit(20);
+        //petriDish.printMatrix();
 
         ThreadPoolExecutor executor = new ThreadPoolExecutor(
                 5,
@@ -30,9 +31,9 @@ public class Main {
                 new LinkedBlockingQueue<>()
         );
 
-        //executor.submit(new Bacteria(executor, channel, queue, petriDish, 3, 4, "asexual"));
-        //executor.submit(new Bacteria(executor, channel, queue, petriDish, 7, 8, "sexual"));
-        executor.execute(new Bacteria(executor, channel, queue, petriDish, 2, 6, "asexual"));
+        executor.submit(new Bacteria(executor, channel, queue, petriDish, 3, 4, "asexual"));
+        executor.submit(new Bacteria(executor, channel, queue, petriDish, 7, 8, "sexual"));
+        executor.submit(new Bacteria(executor, channel, queue, petriDish, 7, 4, "sexual"));
 
         if (petriDish.getBacteria().isEmpty()) {
             channel.close();
