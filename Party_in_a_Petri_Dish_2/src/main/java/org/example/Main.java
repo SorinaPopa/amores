@@ -31,9 +31,9 @@ public class Main {
                 new LinkedBlockingQueue<>()
         );
 
-        executor.submit(new Bacteria(executor, channel, queue, petriDish, 3, 4, "asexual"));
-        executor.submit(new Bacteria(executor, channel, queue, petriDish, 7, 8, "sexual"));
-        executor.submit(new Bacteria(executor, channel, queue, petriDish, 7, 4, "sexual"));
+        executor.execute(new Bacteria(executor, channel, queue, petriDish, 3, 4, "asexual"));
+        executor.execute(new Bacteria(executor, channel, queue, petriDish, 7, 8, "sexual"));
+        executor.execute(new Bacteria(executor, channel, queue, petriDish, 7, 4, "sexual"));
 
         if (petriDish.getBacteria().isEmpty()) {
             channel.close();

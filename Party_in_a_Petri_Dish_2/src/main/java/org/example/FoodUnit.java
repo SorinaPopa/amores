@@ -3,7 +3,8 @@ package org.example;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class FoodUnit {
-    private final int x, y, tFull;
+    private final int x, y;
+    public final int tFull;
 
     private final ReentrantLock lock = new ReentrantLock();
 

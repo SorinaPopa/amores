@@ -122,7 +122,7 @@ public class Bacteria implements Runnable {
         double minDistance = Double.MAX_VALUE;
 
         for (Bacteria bacteria : bacteriaList) {
-            if (bacteria.readyToMultiply) {
+            if (bacteria.readyToMultiply && !bacteria.isAsexual()) {
                 int[] bacteriaPosition = bacteria.getPosition();
                 double distance = calculateDistance(currentPosition, bacteriaPosition);
 
@@ -156,9 +156,9 @@ public class Bacteria implements Runnable {
             for (FoodUnit foodUnit : this.map.getFoodUnits()) {
                 if (foodUnit.getX() == targetX && foodUnit.getY() == targetY) {
                     if (this.T_full >= 0) {
-                        this.T_full += 2;
+                        this.T_full += foodUnit.tFull;
                     } else {
-                        this.T_starve += 2;
+                        this.T_starve += foodUnit.tFull;
                     }
                     this.map.eraseFoodUnit(foodUnit);
                     break;
@@ -214,7 +214,7 @@ public class Bacteria implements Runnable {
                                 newX = Math.max(0, Math.min(newX, map.getDimension()[0] - 1));
                                 newY = Math.max(0, Math.min(newY, map.getDimension()[1] - 1));
 
-                                this.executor.submit(new Bacteria(this.executor, this.channel, this.queue, this.map, newX, newY, "sexual"));
+                                this.executor.execute(new Bacteria(this.executor, this.channel, this.queue, this.map, newX, newY, "sexual"));
                                 this.readyToMultiply = false;
                                 this.eat_counter = 0;
                             }
